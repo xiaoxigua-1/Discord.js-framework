@@ -1,5 +1,5 @@
 let prefix = "*" //prefix
-let owner = 458988300418416640 //作者id
+let owner = 45898830041841664 //作者id
 const Discord = require('discord.js'); //匯入discord.js模組
 const fs = require('fs');
 const client = new Discord.Client(); //機器人本體物件
@@ -9,12 +9,11 @@ client.on('ready', () => {
 let event
 client.CogDict = {}
 let commands = {}
-let commandse
+let commandse = {}
+client.owner = owner
 client.AddCog = function(obj) {
-    obj.Run()
-    commandse = {}
     client.CogDict[obj.name] = obj.cogreturn()
-    commandse[obj.constructor.name] = obj.commandsreturn()
+    commandse[obj.name] = obj.commandsreturn()
     let groups = obj.groupreturn();
     Object.assign(commands, groups)
     event = obj.eventretuen()
@@ -32,8 +31,7 @@ function cmds() {
     }
 }
 cmds()
-console.log(client.CogDict)
-
+    //console.log(client.CogDict)
 for (command of Object.values(commandse)) {
     Object.assign(commands, command)
 }
@@ -50,8 +48,7 @@ for (file of event) {
         }
         client.on(file.name, w(file))
     } catch (error) {
-        console.log(`file:${file.name}\nError:\n`)
-        console.log(error)
+        console.log(`file:${file.name}\nError:\n\n${error}`)
     }
 }
 client.on('message', msg => { //on_message
@@ -62,8 +59,8 @@ client.on('message', msg => { //on_message
                 ag.shift()
                 commands[msg.content.replace(prefix, "").split(" ")[0].toLowerCase()](msg, ...ag)
             } catch (error) {
-                console.log(msg.author.tag + ":" + msg.content)
-                console.log("Error:" + error)
+                console.log(`${msg.author.tag} : ${msg.content}`)
+                console.log(`Error: ${error}`)
             }
         } else {
             msg.channel.send("很像沒這指令喔")
