@@ -1,22 +1,27 @@
-let prefix = "*" //prefix
-let owner = 45898830041841664 //作者id
-const Discord = require('discord.js'); //匯入discord.js模組
+const Discord = require('discord.js');
+const commandserror = require("./core/commandserror") //匯入discord.js模組
 const fs = require('fs');
+let jsoninif = JSON.parse(fs.readFileSync("./config/config.json").toString())
+fs.readFile
+let prefix = jsoninif.prefix
+let owner = jsoninif.owner_id //作者id
 const client = new Discord.Client(); //機器人本體物件
-client.on('ready', () => {
-    console.log(`Logged in as ${client.user.tag}!`);
-});
 let event
 client.CogDict = {}
 let commands = {}
 let commandse = {}
 client.owner = owner
+let tasks = []
+client.CommandsError = function(msg, error) {
+    console.log(error)
+}
 client.AddCog = function(obj) {
     client.CogDict[obj.name] = obj.cogreturn()
     commandse[obj.name] = obj.commandsreturn()
     let groups = obj.groupreturn();
     Object.assign(commands, groups)
     event = obj.eventretuen()
+    tasks.push(obj.tasks)
 }
 
 function cmds() {
@@ -26,7 +31,7 @@ function cmds() {
         try {
             q(client)
         } catch (e) {
-            console.log(`Error:${e}`)
+            console.log(`${file}Error:${e}`)
         }
     }
 }
@@ -51,20 +56,33 @@ for (file of event) {
         console.log(`file:${file.name}\nError:\n\n${error}`)
     }
 }
+client.on('ready', () => {
+    console.log(`Logged in as ${client.user.tag}!`);
+    for (let i of tasks) {
+        i.run()
+    }
+});
 client.on('message', msg => { //on_message
-    if (msg.content.startsWith(prefix) && !msg.author.bot) {
+    if (msg.content.startsWith(prefix) && !msg.author.bot && !jsoninif.blacklist.includes(Number(msg.author.id))) {
         if (Object.keys(commands).includes(msg.content.replace(prefix, "").split(" ")[0].toLowerCase())) {
             try {
                 let ag = msg.content.split(" ")
                 ag.shift()
                 commands[msg.content.replace(prefix, "").split(" ")[0].toLowerCase()](msg, ...ag)
             } catch (error) {
-                console.log(`${msg.author.tag} : ${msg.content}`)
-                console.log(`Error: ${error}`)
+                client.CommandsError(msg, error)
             }
         } else {
-            msg.channel.send("很像沒這指令喔")
+            try {
+                throw new commandserror(`Not command is ${msg.content.replace(prefix, "").split(" ")[0].toLowerCase()}`, "Commands.Errors.Not_command")
+            } catch (e) {
+                try {
+                    client.CommandsError(msg, e)
+                } catch (e) {
+                    console.log(e)
+                }
+            }
         }
     }
 });
-client.login('NzM2MDcwODQzOTY0MzI1OTQ4.XxpdZA.tIMi9EGMyI_YOeVWDGGdqITQ5R8');
+client.login(jsoninif.token);

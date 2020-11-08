@@ -1,7 +1,7 @@
 const Discord = require('discord.js');
-const Commands = require("../core/classes.js")
+const Commands = require("../core/commands.js")
 const youtubedl = require('ytdl-core')
-let youtubeapitaken = "AIzaSyA-0jC7ch0i53m9KTAmwwLPXfU-IIpcwpo"
+let youtubeapitaken = ""
 let ytsearch = require('youtube-search');
 
 let opts = {
@@ -41,8 +41,6 @@ class PlayList {
     playsong(voice) {
         voice.join.then(connection => {
             if (voice.pl.play === false) {
-                // You can play a file or a stream here:
-
                 if (voice.pl.songlist.length === 0) {
                     voice.pl.nowplay = null
                     return
@@ -71,7 +69,6 @@ class PlayList {
                     voice.pl.skip = false
                     voice.pl.play = false
                 }
-
             }
         });
     }
@@ -92,11 +89,10 @@ class PlayList {
     }
     nowpalytime(msg, pl) {
         let nowpp = Embed.embed()
-        if (pl.nowplay.s === 0) {
+        if (pl.nowplay.s === "0") {
             nowpp.setDescription(`正在播放:
             [${pl.nowplay.title}](${pl.nowplay.url})
             時間:${Math.floor(pl.dispatcher.streamTime/60000)}:${Math.floor(pl.dispatcher.streamTime/1000%60000)}/∞`)
-
         } else {
             nowpp.setDescription(`正在播放:
             [${pl.nowplay.title}](${pl.nowplay.url})
@@ -111,8 +107,6 @@ class PlayList {
 class Player {
     constructor() {
         this.voiceid = {}
-
-
     }
     AddPlayer(channel, playlist) {
         let voicechannel = channel.join()
@@ -159,7 +153,6 @@ class Embed {
     static botnotinvoice(msg) {
         return Embed.embed().setDescription(`${msg.author.tag}你似乎沒有把我加進語音優`)
     }
-
 }
 
 function Search(search, pl, msg) {
@@ -226,7 +219,12 @@ module.exports = function setup(bot) {
         if (Object.keys(Guilds).includes(msg.guild.id)) {
             if (Guilds[msg.guild.id].sw) {
                 msg.channel.send(Embed.embed().setDescription("已經暫停了優~~"))
-            } else if (!Guilds[msg.guild.id].pausew(msg.member.voice.channel.id)) msg.channel.send(Embed.Notvoicrasme(msg));
+            } else {
+                if (!Guilds[msg.guild.id].pausew(msg.member.voice.channel.id)) msg.channel.send(Embed.Notvoicrasme(msg))
+                else {
+                    msg.channel.send(Embed.embed().setDescription("已暫停"))
+                }
+            }
         } else {
             msg.channel.send(Embed.botnotinvoice(msg))
         }
@@ -270,13 +268,38 @@ module.exports = function setup(bot) {
                 } else {
                     msg.channel.send(Embed.embed().setDescription("沒有再播放歌曲優~"))
                 }
-
             }
         } else {
             msg.channel.send(Embed.botnotinvoice(msg))
         }
     })
+    commands.command(function queue(msg) {
+            if (msg.member.voice.channel === null) {
+                msg.channel.send(Embed.Notinvoie(msg))
+                return
+            }
 
+            if (Object.keys(Guilds).includes(msg.guild.id)) {
+                if (msg.member.voice.channel.id !== Guilds[msg.guild.id].id) {
+                    msg.channel.send(Embed.Notvoicrasme(msg));
+                    return
+                } else {
+                    if (Guilds[msg.guild.id].songlist.length !== 0) {
+                        let text = ""
+                        let w = 1
+                        for (let i of Guilds[msg.guild.id].songlist) {
+                            text += `${w}.[${i.title}](${i.url})\n`
+                            w += 1
+                        }
+                        msg.channel.send(Embed.embed().setDescription(text))
+                    } else {
+                        msg.channel.send(Embed.embed().setDescription("沒有歌摟~"))
+                    }
+                }
+            } else {
+                msg.channel.send(Embed.botnotinvoice(msg))
+            }
+        })
+        //bot.AddCog(commands)
 
-    bot.AddCog(commands)
 }
