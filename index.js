@@ -12,16 +12,32 @@ let commands = {}
 let commandse = {}
 client.owner = owner
 let tasks = []
-client.CommandsError = function(msg, error) {
+client.CommandsError = function (msg, error) {
     console.log(error)
 }
-client.AddCog = function(obj) {
+client.AddCog = function (obj) {
     client.CogDict[obj.name] = obj.cogreturn()
     commandse[obj.name] = obj.commandsreturn()
     let groups = obj.groupreturn();
     Object.assign(commands, groups)
     event = obj.eventretuen()
     tasks.push(obj.tasks)
+    for (file of event) {
+        try {
+            w = function (fun) {
+                return function (...a) {
+                    try {
+                        fun(...a)
+                    } catch (error) {
+                        console.log(error)
+                    }
+                }
+            }
+            client.on(file.name, w(file))
+        } catch (error) {
+            console.log(`file:${file.name}\nError:\n\n${error}`)
+        }
+    }
 }
 
 function cmds() {
@@ -36,26 +52,11 @@ function cmds() {
     }
 }
 cmds()
-    //console.log(client.CogDict)
+//console.log(client.CogDict)
 for (command of Object.values(commandse)) {
     Object.assign(commands, command)
 }
-for (file of event) {
-    try {
-        w = function(fun) {
-            return function(...a) {
-                try {
-                    fun(...a)
-                } catch (error) {
-                    console.log(error)
-                }
-            }
-        }
-        client.on(file.name, w(file))
-    } catch (error) {
-        console.log(`file:${file.name}\nError:\n\n${error}`)
-    }
-}
+
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
     for (let i of tasks) {
@@ -64,17 +65,17 @@ client.on('ready', () => {
 });
 client.on('message', msg => { //on_message
     if (msg.content.startsWith(prefix) && !msg.author.bot && !jsoninif.blacklist.includes(Number(msg.author.id))) {
-        if (Object.keys(commands).includes(msg.content.replace(prefix, "").split(" ")[0].toLowerCase())) {
+        if (Object.keys(commands).includes(msg.content.replace(prefix, "").split(/ +/g)[0].toLowerCase())) {
             try {
-                let ag = msg.content.split(" ")
+                let ag = msg.content.split(/ +/g)
                 ag.shift()
-                commands[msg.content.replace(prefix, "").split(" ")[0].toLowerCase()](msg, ...ag)
+                commands[msg.content.replace(prefix, "").split(/ +/g)[0].toLowerCase()](msg, ...ag)
             } catch (error) {
                 client.CommandsError(msg, error)
             }
         } else {
             try {
-                throw new commandserror(`Not command is ${msg.content.replace(prefix, "").split(" ")[0].toLowerCase()}`, "Commands.Errors.Not_command")
+                throw new commandserror(`Not command is ${msg.content.replace(prefix, "").split(/ +/g)[0].toLowerCase()}`, "Commands.Errors.Not_command")
             } catch (e) {
                 try {
                     client.CommandsError(msg, e)
